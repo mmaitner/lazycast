@@ -36,6 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "bcm_host.h"
 #include "ilclient.h"
 #include <alsa/asoundlib.h>
+#include <errno.h>
 
 
 typedef int int32_t;
@@ -135,12 +136,11 @@ int32_t audioplay_delete(COMPONENT_T *audio_render)
 int32_t audioplay_play_buffer(COMPONENT_T *audio_render, uint8_t *buffer, uint32_t length)
 {
 	if(is_alsa) {
-		int pcmreturn;
-
-		while ((pcmreturn = snd_pcm_writei(pcm_dev, buffer, length>>2)) < 0) {
-			snd_pcm_prepare(pcm_dev);
-			printf("--:%u----\n", length);
-		}
+		snd_pcm_sframes_t r = snd_pcm_writei(pcm_dev, buffer, length>>2);
+		if (r == -EAGAIN)
+			return 0; /* buffer full (source clock running fast): drop this tiny chunk instead of spinning */
+		if (r < 0 && snd_pcm_recover(pcm_dev, (int)r, 1) == 0)
+			snd_pcm_writei(pcm_dev, buffer, length>>2);
 	}
 	else {
 		OMX_BUFFERHEADERTYPE *hdr = ilclient_get_input_buffer(audio_render, 100, 0);

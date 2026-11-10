@@ -42,6 +42,31 @@ display_power_management = 0
 
 ####################################################
 
+def lazycast_video_formats():
+	# Frame-rate limit from lazycast.conf: FPS=30, 60 or auto (default)
+	fmt30 = '000194BF 00000000 00000000'   # max 1080p30, TV modes only
+	fmt60 = '0001FEFF 0F3FFFFF 00000FFF'   # up to 1080p50 / 720p60
+	mode = 'auto'
+	try:
+		conf = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'lazycast.conf')
+		for line in open(conf):
+			line = line.strip()
+			if line.startswith('FPS='):
+				mode = line[4:].strip()
+	except Exception:
+		pass
+	if mode not in ('30', '60', 'auto'):
+		mode = 'auto'
+	if mode == 'auto':
+		try:
+			model = open('/proc/device-tree/model').read()
+		except Exception:
+			model = ''
+		slow = ('Raspberry Pi 3', 'Raspberry Pi 2', 'Raspberry Pi Zero')
+		mode = '30' if any(m in model for m in slow) else '60'
+	return fmt30 if mode == '30' else fmt60
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('arg1', nargs='?', default='192.168.173.80')
 args = parser.parse_args()
@@ -228,9 +253,9 @@ else:
 	msg = msg + 'wfd_audio_codecs: AAC 00000001 00\r\n'
 
 if disable_1920_1080_60fps == 1:
-	msg = msg + 'wfd_video_formats: 00 00 02 10 0001FEFF 3FFFFFFF 00000FFF 00 0000 0000 00 none none\r\n'
+	msg = msg + 'wfd_video_formats: 00 00 02 10 ' + lazycast_video_formats() + ' 00 0000 0000 00 none none\r\n'
 else:
-	msg = msg + 'wfd_video_formats: 00 00 02 10 0001FFFF 3FFFFFFF 00000FFF 00 0000 0000 00 none none\r\n'
+	msg = msg + 'wfd_video_formats: 00 00 02 10 0001FFFF 0F3FFFFF 00000FFF 00 0000 0000 00 none none\r\n'
 
 msg = msg +'wfd_3d_video_formats: none\r\n'\
 	+'wfd_coupled_sink: none\r\n'\
@@ -405,6 +430,7 @@ if not runonpi:
 
 def launchplayer(player_select):
 	killall(False)
+	sleep(0.5)
 	if display_power_management == 1:
 		os.system('vcgencmd display_power 1')
 	if player_select == 0:
@@ -458,6 +484,8 @@ negotiation_time = time.time()
 
 csnum = 102
 watchdog = 0
+last_pcheck = 0
+idr_due = 0
 while True:
 	try:
 		data = sock.recv(2048)
@@ -471,11 +499,22 @@ while True:
 			except socket.error as e:
 				err = e.args[0]
 				if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
-					processrunning = os.popen('ps au').read()
-					if player_select == 2 and 'h264.bin' not in processrunning:
-						launchplayer(player_select)						
+					if idr_due and time.time() > idr_due:
+						idr_due = 0
+						csnum = csnum + 1
+						msg = 'wfd_idr_request\r\n'
+						idrreq = 'SET_PARAMETER rtsp://localhost/wfd1.0 RTSP/1.0\r\n'+'Content-Length: '+str(len(msg))+'\r\n'+'Content-Type: text/parameters\r\n'+'CSeq: '+str(csnum)+'\r\n\r\n'+msg
+						print(idrreq)
+						sock.sendall(idrreq.encode())
+					player_missing = False
+					if player_select == 2 and time.time() - last_pcheck > 1:
+						last_pcheck = time.time()
+						player_missing = 'h264.bin' not in os.popen('ps aux').read()
+					if player_missing:
+						launchplayer(player_select)
 						sleep(0.01)
 					else:
+						sleep(0.01)
 						watchdog = watchdog + 1
 						if watchdog == 70/0.01:
 							killall(True)
@@ -513,6 +552,7 @@ while True:
 			break
 		elif 'wfd_video_formats' in data and time.time() - negotiation_time > 5:
 			launchplayer(player_select)
+			idr_due = time.time() + 1.5
 		messagelist=data.split('\r\n\r\n')
 		print(messagelist)
 		singlemessagelist=[x for x in messagelist if ('GET_PARAMETER' in x or 'SET_PARAMETER' in x )]

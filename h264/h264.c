@@ -490,7 +490,7 @@ static int video_decode_test(rtppacket* beg)
 			int non = atomic_load(&numofnode);
 			if (non < 2)
 			{
-				usleep(10);
+				usleep(500);
 				continue;
 			}
 			/*else if (non > 10)
