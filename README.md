@@ -44,17 +44,17 @@ See the [changelog](CHANGELOG.md) for full details.
 | Pi 3B+, 3A+, 400, 5 | 5 GHz | Expected to work, not tested |
 
 - **OS:** Raspberry Pi OS (Legacy, 32-bit) **Bullseye**, Lite recommended. Bookworm and 64-bit are not supported.
-- **SD card:** 8 GB or larger. A "high endurance" card is recommended.
+- **SD card:** 8 GB or larger.
 - **Power supply:** a good-quality supply (2.5 A for Pi 3B / Zero 2 W, 3 A for Pi 4). A weak supply causes throttling.
 - **Sources:** Windows 10 and 11 laptops with Miracast support.
 
 ## Option A: Flash the ready-made image
 
-1. Download the latest lazycast `.img` file from the [Releases](https://github.com/mmaitner/lazycast/releases) page.
+1. Download the latest lazycast `.img.xz` file from the [Releases](https://github.com/mmaitner/lazycast/releases) page.
 2. Download [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
 3. Run Raspberry Pi Imager:
    - Select your Raspberry Pi model.
-   - On the **Operating System** screen, scroll down and select **Use Custom**, then choose the `.img` file.
+   - On the **Operating System** screen, scroll down and select **Use Custom**, then choose the `.img.xz` file.
    - Select your SD card as storage.
    - Write and verify the card. If Imager asks about **OS customisation**, choose **No** — customisation can change the user, hostname or SSH settings the image depends on.
 4. Once written, insert the card into the Pi and turn it on while it's connected to a display.
@@ -62,7 +62,7 @@ See the [changelog](CHANGELOG.md) for full details.
 6. With a keyboard connected, press **Ctrl+Alt+F2** to get to the login prompt on tty2. (**Alt+F1** returns to the splash.)
 7. Log in:
    - Username: `cast`
-   - Password: provided with the image release (it is not published in this repository). Change it after first login with `passwd`.
+   - Password: `lazycast` Change it after first login with `passwd` or `sudo raspi-config`.
 8. Run `sudo raspi-config`.
 9. Set the hostname under **System Options** → **Hostname**. This is the name laptops see in WIN+K.
    - Use only letters, numbers and hyphens. **No underscores** or special characters.
