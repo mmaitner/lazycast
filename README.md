@@ -1,4 +1,5 @@
 # lazycast — Education Edition
+<img width="1920" height="1080" alt="splash" src="https://github.com/user-attachments/assets/aa4fdd3e-de73-4085-8c38-c46a001cbe08" />
 
 A boot-to-cast Miracast receiver for Raspberry Pi. Plug a Pi into a TV or projector, and Windows laptops can cast to it with **WIN+K** — no login, no desktop, no network configuration.
 
