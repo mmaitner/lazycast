@@ -1,9 +1,10 @@
 # lazycast — Education Edition
-<img width="1920" height="1080" alt="splash" src="https://github.com/user-attachments/assets/aa4fdd3e-de73-4085-8c38-c46a001cbe08" />
 
 A boot-to-cast Miracast receiver for Raspberry Pi. Plug a Pi into a TV or projector, and Windows laptops can cast to it with **WIN+K** — no login, no desktop, no network configuration.
 
 This is a heavily modified fork of [lazycast by homeworkc](https://github.com/homeworkc/lazycast). The receiver core is the same, but `all.sh`, `d2.py` and the `h264.bin` player have been changed for a better on-screen experience, lower CPU use and much better stability, and three setup scripts were added to make deployment repeatable.
+
+<img width="1920" height="1080" alt="splash" src="https://github.com/user-attachments/assets/aa4fdd3e-de73-4085-8c38-c46a001cbe08" />
 
 ## Contents
 
